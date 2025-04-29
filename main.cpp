@@ -1,5 +1,5 @@
-#include "avl_tree.h"
-
+#include "avl_tree.hpp"
+#include "tree_exceptions.hpp"
 
 
 int main() {
@@ -34,7 +34,7 @@ int main() {
     
     std::vector<int> results;
     tree.RangeQuery(15, 25, [&results](int key) {
-        results.push_back(key);
+        results.push_back(key); // FIXME сделать резервацию для вектора заранее 
     });
     std::cout << "Keys in range [15, 25]: ";
     for (int key : results) {

@@ -5,41 +5,42 @@
 #include <stack>
 #include <algorithm>
 
+#include "tree_exceptions.hpp"
 namespace avl_tree
 {
 
     template <typename T, typename Compare = std::less<T>>
-    class AVLTree
+    class AVLTree final
     {
     private:
-        struct Node
+        struct Node final
         {
             T key_;
             std::unique_ptr<Node> left_;
             std::unique_ptr<Node> right_;
             int height_ = 1;
-
-            Node(const T &key) : key_(key) {}
+            int subtree_size_ = 1; // размер поддерева включая текущий элемент
+            explicit Node(const T &key) : key_(key) {}
         };
 
         std::unique_ptr<Node> root_;
 
-        int GetHeight(const std::unique_ptr<Node> &node) const
+        int GetHeight(const std::unique_ptr<Node>& node) const
         {
             return node ? node->height_ : 0;
         }
 
-        int GetBalance(const std::unique_ptr<Node> &node) const
+        int GetBalance(const std::unique_ptr<Node>& node) const
         {
             return node ? GetHeight(node->left_) - GetHeight(node->right_) : 0;
         }
 
-        void UpdateHeight(const std::unique_ptr<Node> &node)
+        void UpdateHeight(const std::unique_ptr<Node>& node)
         {
-            if (node)
-            {
-                node->height_ = 1 + std::max(GetHeight(node->left_), GetHeight(node->right_));
-            }
+            if (!node)
+                throw NodeNullException();
+            
+            node->height_ = 1 + std::max(GetHeight(node->left_), GetHeight(node->right_));
         }
 
         std::unique_ptr<Node> RotateRight(std::unique_ptr<Node> y)
@@ -73,7 +74,7 @@ namespace avl_tree
         std::unique_ptr<Node> Balance(std::unique_ptr<Node> node)
         {
             if (!node)
-                return nullptr;
+                throw NodeNullException();
 
             UpdateHeight(node);
             int balance = GetBalance(node);
@@ -146,7 +147,7 @@ namespace avl_tree
         };
 
        
-        class PreOrderStrategy : public TraversalStrategy
+        class PreOrderStrategy final : public TraversalStrategy
         {
         public:
             void Init(const Node *root, std::stack<const Node *> &stack) override
@@ -182,7 +183,7 @@ namespace avl_tree
         };
 
         
-        class InOrderStrategy : public TraversalStrategy
+        class InOrderStrategy final: public TraversalStrategy
         {
         public:
             void Init(const Node *root, std::stack<const Node *> &stack) override
@@ -222,7 +223,7 @@ namespace avl_tree
         };
 
         
-        class PostOrderStrategy : public TraversalStrategy
+        class PostOrderStrategy final: public TraversalStrategy
         {
         public:
             void Init(const Node *root, std::stack<const Node *> &stack) override
@@ -273,7 +274,7 @@ namespace avl_tree
         };
 
         // Итератор
-        class AVLIterator
+        class AVLIterator final
         {
         private:
             std::stack<const Node *> stack_;
@@ -312,7 +313,7 @@ namespace avl_tree
             {
                 return isEnd_ != other.isEnd_ || stack_ != other.stack_;
             }
-        };
+        }; // class AVLIterator
 
         // Методы для создания итераторов
         AVLIterator BeginPreOrder() const
@@ -349,7 +350,9 @@ namespace avl_tree
         void RangeQuery(const std::unique_ptr<Node> &node, const T &min, const T &max, std::function<void(const T &)> callback) const
         {
             if (!node)
-                return;
+                throw NodeNullException();
+
+            // FIXME exceptions needed
             const T &key = node->key_;
             Compare comp;
             if (comp(min, key))
