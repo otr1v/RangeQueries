@@ -2,13 +2,13 @@
 
 #include <stdexcept>
 
-#include "avl_tree.hpp"
 
-namespace AVLTree
+namespace avl_tree
 {
 
-    struct AVLException : public std::exception
+    class AVLException : public std::exception
     {
+    public:
         explicit AVLException(const char *msg) : message_(msg) {}
         const char *what() const noexcept override { return message_; }
 
@@ -16,17 +16,19 @@ namespace AVLTree
         const char *message_;
     };
 
-    struct EmptyTreeException : public AVLException
+    class EmptyTreeException : public AVLException
     {
+    public:
         EmptyTreeException() : AVLException("\n Operation on empty AVL tree") {}
     };
 
-    struct NodeNullException : public AVLException
+    class NodeNullException : public AVLException
     {
+    public:
         NodeNullException()
             : AVLException("\n Internal error: encountered null node") {}
     };
 
    
 
-} // namespace AVLTree
+} // namespace avl_tree

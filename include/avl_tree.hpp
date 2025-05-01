@@ -8,7 +8,7 @@
 #include "tree_exceptions.hpp"
 namespace avl_tree
 {
-
+    using avl_tree::NodeNullException;
     template <typename T, typename Compare = std::less<T>>
     class AVLTree final
     {
@@ -19,11 +19,83 @@ namespace avl_tree
             std::unique_ptr<Node> left_;
             std::unique_ptr<Node> right_;
             int height_ = 1;
-            int subtree_size_ = 1; // размер поддерева включая текущий элемент
+            //int subtree_size_ = 1; // размер поддерева включая текущий элемент
             explicit Node(const T &key) : key_(key) {}
         };
 
         std::unique_ptr<Node> root_;
+
+
+    // Итеративная очистка дерева
+    void Clear() {
+        if (!root_) return;
+
+        std::stack<std::unique_ptr<Node>> stack;
+        stack.push(std::move(root_)); 
+
+        while (!stack.empty()) {
+            std::unique_ptr<Node> node = std::move(stack.top());
+            stack.pop();
+
+            
+            if (node->right_) {
+                stack.push(std::move(node->right_));
+            }
+            if (node->left_) {
+                stack.push(std::move(node->left_));
+            }
+
+            
+        }
+    }
+
+public:
+    ~AVLTree() {
+        Clear(); 
+    }
+
+    
+    void RangeQuery(const T& min, const T& max, std::function<void(const T&)> callback) const {
+        std::stack<const Node*> stack;
+        const Node* current = root_.get();
+        Compare comp;
+
+        while (current) {
+            if (comp(min, current->key_)) {
+                stack.push(current);
+                current = current->left_.get();
+            } else {
+                break;
+            }
+        }
+
+        while (!stack.empty() || current) {
+            if (current) {
+                if (comp(min, current->key_)) {
+                    stack.push(current);
+                    current = current->left_.get();
+                    continue;
+                }
+            }
+
+            if (!stack.empty()) {
+                current = stack.top();
+                stack.pop();
+                const T& key = current->key_;
+
+                if (!comp(key, min) && !comp(max, key)) {
+                    callback(key);
+                }
+
+                if (comp(key, max)) {
+                    current = current->right_.get();
+                } else {
+                    current = nullptr;
+                }
+            }
+        }
+    }
+
 
         int GetHeight(const std::unique_ptr<Node>& node) const
         {
@@ -33,6 +105,13 @@ namespace avl_tree
         int GetBalance(const std::unique_ptr<Node>& node) const
         {
             return node ? GetHeight(node->left_) - GetHeight(node->right_) : 0;
+        }
+
+        bool VerifyBalance(const std::unique_ptr<Node>& node) const
+        {
+            if (!node)
+                throw NodeNullException();
+            return std::abs(GetBalance(node)) <= 1;
         }
 
         void UpdateHeight(const std::unique_ptr<Node>& node)
@@ -346,7 +425,7 @@ namespace avl_tree
             return AVLIterator(nullptr, std::make_unique<PostOrderStrategy>());
         }
 
-        
+        #ifdef NOT_VALID
         void RangeQuery(const std::unique_ptr<Node> &node, const T &min, const T &max, std::function<void(const T &)> callback) const
         {
             if (!node)
@@ -373,7 +452,7 @@ namespace avl_tree
         {
             RangeQuery(root_, min, max, callback);
         }
-
+        #endif /* NOT_VALID */
         
         AVLTree(AVLTree &&) = default;
         AVLTree &operator=(AVLTree &&) = default;
