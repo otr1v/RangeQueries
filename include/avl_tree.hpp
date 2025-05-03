@@ -4,12 +4,25 @@
 #include <functional>
 #include <stack>
 #include <algorithm>
+#include <glog/logging.h>
 
 #include "tree_exceptions.hpp"
 namespace avl_tree
 {
+    template<typename T, typename Container = std::deque<T>>
+    void printStack(std::stack<T, Container> stackToPrint) { 
+        LOG(INFO) << "Stack from top to down: ";
+        while (!stackToPrint.empty()) {
+            LOG(INFO) << (*stackToPrint.top()).key_ << " ";
+            stackToPrint.pop();
+        }
+        //LOG(INFO) << std::endl;
+    }
+
+
+
     using avl_tree::NodeNullException;
-    template <typename T, typename Compare = std::less<T>>
+    template <typename T>
     class AVLTree final
     {
     private:
@@ -19,106 +32,73 @@ namespace avl_tree
             std::unique_ptr<Node> left_;
             std::unique_ptr<Node> right_;
             int height_ = 1;
-            //int subtree_size_ = 1; // размер поддерева включая текущий элемент
+            size_t desc_size = 1; // Size of the subtree rooted at this node
             explicit Node(const T &key) : key_(key) {}
         };
 
         std::unique_ptr<Node> root_;
 
+        // Итеративная очистка дерева
+        void Clear()
+        {
+            if (!root_)
+                return;
 
-    // Итеративная очистка дерева
-    void Clear() {
-        if (!root_) return;
+            std::stack<std::unique_ptr<Node>> stack;
+            stack.push(std::move(root_));
 
-        std::stack<std::unique_ptr<Node>> stack;
-        stack.push(std::move(root_)); 
-
-        while (!stack.empty()) {
-            std::unique_ptr<Node> node = std::move(stack.top());
-            stack.pop();
-
-            
-            if (node->right_) {
-                stack.push(std::move(node->right_));
-            }
-            if (node->left_) {
-                stack.push(std::move(node->left_));
-            }
-
-            
-        }
-    }
-
-public:
-    ~AVLTree() {
-        Clear(); 
-    }
-
-    
-    void RangeQuery(const T& min, const T& max, std::function<void(const T&)> callback) const {
-        std::stack<const Node*> stack;
-        const Node* current = root_.get();
-        Compare comp;
-
-        while (current) {
-            if (comp(min, current->key_)) {
-                stack.push(current);
-                current = current->left_.get();
-            } else {
-                break;
-            }
-        }
-
-        while (!stack.empty() || current) {
-            if (current) {
-                if (comp(min, current->key_)) {
-                    stack.push(current);
-                    current = current->left_.get();
-                    continue;
-                }
-            }
-
-            if (!stack.empty()) {
-                current = stack.top();
+            while (!stack.empty())
+            {
+                std::unique_ptr<Node> node = std::move(stack.top());
                 stack.pop();
-                const T& key = current->key_;
 
-                if (!comp(key, min) && !comp(max, key)) {
-                    callback(key);
+                if (node->right_)
+                {
+                    stack.push(std::move(node->right_));
                 }
-
-                if (comp(key, max)) {
-                    current = current->right_.get();
-                } else {
-                    current = nullptr;
+                if (node->left_)
+                {
+                    stack.push(std::move(node->left_));
                 }
             }
         }
-    }
+        void UpdateSize(const std::unique_ptr<Node>& node)
+        {
+            if (!node)
+                throw NodeNullException();
+            node->desc_size = 1 + (node->left_ ? node->left_->desc_size : 0) + (node->right_ ? node->right_->desc_size : 0);
+        }
 
 
-        int GetHeight(const std::unique_ptr<Node>& node) const
+        int GetHeight(const std::unique_ptr<Node> &node) const
         {
             return node ? node->height_ : 0;
         }
 
-        int GetBalance(const std::unique_ptr<Node>& node) const
+        T GetKey(const std::unique_ptr<Node> &node) const
+        {
+            if (!node)
+                throw NodeNullException();
+            return node->key_;
+        }
+
+        int GetBalance(const std::unique_ptr<Node> &node) const
         {
             return node ? GetHeight(node->left_) - GetHeight(node->right_) : 0;
         }
 
-        bool VerifyBalance(const std::unique_ptr<Node>& node) const
+        bool VerifyBalance(const std::unique_ptr<Node> &node) const
         {
             if (!node)
                 throw NodeNullException();
             return std::abs(GetBalance(node)) <= 1;
         }
 
-        void UpdateHeight(const std::unique_ptr<Node>& node)
+        void UpdateHeight(const std::unique_ptr<Node> &node)
         {
             if (!node)
                 throw NodeNullException();
-            
+
             node->height_ = 1 + std::max(GetHeight(node->left_), GetHeight(node->right_));
         }
 
@@ -131,7 +111,9 @@ public:
             x->right_->left_ = std::move(T2);
 
             UpdateHeight(x->right_);
+            UpdateSize(x->right_);
             UpdateHeight(x);
+            UpdateSize(x);
 
             return x;
         }
@@ -145,7 +127,9 @@ public:
             y->left_->right_ = std::move(T2);
 
             UpdateHeight(y->left_);
+            UpdateSize(y->left_);
             UpdateHeight(y);
+            UpdateSize(y);
 
             return y;
         }
@@ -156,6 +140,7 @@ public:
                 throw NodeNullException();
 
             UpdateHeight(node);
+            UpdateSize(node);
             int balance = GetBalance(node);
 
             if (balance > 1)
@@ -186,12 +171,11 @@ public:
                 return std::make_unique<Node>(key);
             }
 
-            Compare comp;
-            if (comp(key, node->key_))
+            if (key < node->key_)
             {
                 node->left_ = InsertNode(std::move(node->left_), key);
             }
-            else if (comp(node->key_, key))
+            else if (node->key_ < key)
             {
                 node->right_ = InsertNode(std::move(node->right_), key);
             }
@@ -205,7 +189,11 @@ public:
 
     public:
         AVLTree() = default;
-
+        
+        ~AVLTree()
+        {
+            Clear();
+        }
         void Insert(const T &key)
         {
             root_ = InsertNode(std::move(root_), key);
@@ -225,7 +213,6 @@ public:
             virtual ~TraversalStrategy() = default;
         };
 
-       
         class PreOrderStrategy final : public TraversalStrategy
         {
         public:
@@ -261,8 +248,7 @@ public:
             }
         };
 
-        
-        class InOrderStrategy final: public TraversalStrategy
+        class InOrderStrategy final : public TraversalStrategy
         {
         public:
             void Init(const Node *root, std::stack<const Node *> &stack) override
@@ -301,8 +287,7 @@ public:
             }
         };
 
-        
-        class PostOrderStrategy final: public TraversalStrategy
+        class PostOrderStrategy final : public TraversalStrategy
         {
         public:
             void Init(const Node *root, std::stack<const Node *> &stack) override
@@ -370,7 +355,7 @@ public:
                 }
             }
 
-            AVLIterator& operator++()
+            AVLIterator &operator++()
             {
                 if (!isEnd_)
                 {
@@ -383,7 +368,7 @@ public:
                 return *this;
             }
 
-            const T& operator*() const
+            const T &operator*() const
             {
                 return strategy_->Current(stack_)->key_;
             }
@@ -391,6 +376,11 @@ public:
             bool operator!=(const AVLIterator &other) const
             {
                 return isEnd_ != other.isEnd_ || stack_ != other.stack_;
+            }
+
+            bool operator==(const AVLIterator &other) const
+            {
+                return isEnd_ == other.isEnd_ && stack_ == other.stack_;
             }
         }; // class AVLIterator
 
@@ -425,7 +415,7 @@ public:
             return AVLIterator(nullptr, std::make_unique<PostOrderStrategy>());
         }
 
-        #ifdef NOT_VALID
+#ifdef NOT_VALID
         void RangeQuery(const std::unique_ptr<Node> &node, const T &min, const T &max, std::function<void(const T &)> callback) const
         {
             if (!node)
@@ -433,7 +423,7 @@ public:
 
             // FIXME exceptions needed
             const T &key = node->key_;
-            Compare comp;
+            //Compare comp;
             if (comp(min, key))
             {
                 RangeQuery(node->left_, min, max, callback);
@@ -448,16 +438,37 @@ public:
             }
         }
 
-        void RangeQuery(const T &min, const T &max, std::function<void(const T &)> callback) const
-        {
-            RangeQuery(root_, min, max, callback);
-        }
+       
         #endif /* NOT_VALID */
-        
+
+        [[nodiscard]] size_t RangeQuery(const T& min, const T& max) const
+        {
+            if (!root_)
+                throw EmptyTreeException();
+            return RangeQueryHelper(root_.get(), min, max);
+        }
+
+        [[nodiscard]] size_t RangeQueryHelper(const Node* node, const T& min, const T& max) const
+        {
+            if (!node)
+                return 0;
+            LOG(INFO) << "Node key: " << node->key_;
+            if (node->key_ < min)
+                return RangeQueryHelper(node->right_.get(), min, max);
+
+            if (node->key_ > max)
+                return RangeQueryHelper(node->left_.get(), min, max);
+
+                
+
+            size_t left_count = node->left_ ? node->left_->desc_size : 0;
+            size_t right_count = node->right_ ? node->right_->desc_size : 0;
+            LOG(INFO) << ", Left count: " << left_count << ", Right count: " << right_count;
+            return 1 + left_count + right_count;
+        }
         AVLTree(AVLTree &&) = default;
         AVLTree &operator=(AVLTree &&) = default;
 
-        
         AVLTree(const AVLTree &) = delete;
         AVLTree &operator=(const AVLTree &) = delete;
     }; // class AVLTree

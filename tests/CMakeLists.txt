@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # Найти Google Test
 find_package(GTest REQUIRED)
+
 include_directories(${GTEST_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src)
