@@ -9,17 +9,6 @@
 #include "tree_exceptions.hpp"
 namespace avl_tree
 {
-    template<typename T, typename Container = std::deque<T>>
-    void printStack(std::stack<T, Container> stackToPrint) { 
-        LOG(INFO) << "Stack from top to down: ";
-        while (!stackToPrint.empty()) {
-            LOG(INFO) << (*stackToPrint.top()).key_ << " ";
-            stackToPrint.pop();
-        }
-        //LOG(INFO) << std::endl;
-    }
-
-
 
     using avl_tree::NodeNullException;
     template <typename T>
@@ -38,7 +27,7 @@ namespace avl_tree
 
         std::unique_ptr<Node> root_;
 
-        // Итеративная очистка дерева
+        // destroy tree without recursion
         void Clear()
         {
             if (!root_)
@@ -62,7 +51,7 @@ namespace avl_tree
                 }
             }
         }
-        void UpdateSize(const std::unique_ptr<Node>& node)
+        void UpdateSubSize(const std::unique_ptr<Node>& node)
         {
             if (!node)
                 throw NodeNullException();
@@ -111,9 +100,9 @@ namespace avl_tree
             x->right_->left_ = std::move(T2);
 
             UpdateHeight(x->right_);
-            UpdateSize(x->right_);
+            UpdateSubSize(x->right_);
             UpdateHeight(x);
-            UpdateSize(x);
+            UpdateSubSize(x);
 
             return x;
         }
@@ -127,9 +116,9 @@ namespace avl_tree
             y->left_->right_ = std::move(T2);
 
             UpdateHeight(y->left_);
-            UpdateSize(y->left_);
+            UpdateSubSize(y->left_);
             UpdateHeight(y);
-            UpdateSize(y);
+            UpdateSubSize(y);
 
             return y;
         }
@@ -140,7 +129,7 @@ namespace avl_tree
                 throw NodeNullException();
 
             UpdateHeight(node);
-            UpdateSize(node);
+            UpdateSubSize(node);
             int balance = GetBalance(node);
 
             if (balance > 1)
@@ -181,10 +170,28 @@ namespace avl_tree
             }
             else
             {
-                return node; // Нельзя дублировать ключи
+                return node; // don't allow duplicates
             }
 
             return Balance(std::move(node));
+        }
+
+        [[nodiscard]] size_t RangeQueryInternal(const Node* node, const T& min, const T& max) const
+        {
+            if (!node)
+                return 0;
+            LOG(INFO) << "Node key: " << node->key_;
+            if (node->key_ < min)
+                return RangeQueryInternal(node->right_.get(), min, max);
+
+            if (node->key_ > max)
+                return RangeQueryInternal(node->left_.get(), min, max);
+
+
+            size_t left_count = RangeQueryInternal(node->left_.get(), min, max);
+            size_t right_count = RangeQueryInternal(node->right_.get(), min, max);
+            LOG(INFO) << ", Left count: " << left_count << ", Right count: " << right_count;
+            return 1 + left_count + right_count;
         }
 
     public:
@@ -199,10 +206,10 @@ namespace avl_tree
             root_ = InsertNode(std::move(root_), key);
         }
 
-        // Интерфейс для итератора
+    
         class AVLIterator;
 
-        // Абстрактная стратегия обхода
+        // abstract base class for traversal strategies
         class TraversalStrategy
         {
         public:
@@ -287,57 +294,7 @@ namespace avl_tree
             }
         };
 
-        class PostOrderStrategy final : public TraversalStrategy
-        {
-        public:
-            void Init(const Node *root, std::stack<const Node *> &stack) override
-            {
-                if (root)
-                {
-                    stack.push(root);
-                    PushChildren(root, stack);
-                }
-            }
 
-            void Next(std::stack<const Node *> &stack) override
-            {
-                if (!stack.empty())
-                {
-                    stack.pop();
-                    if (!stack.empty())
-                    {
-                        PushChildren(stack.top(), stack);
-                    }
-                }
-            }
-
-            const Node *Current(const std::stack<const Node *> &stack) const override
-            {
-                return stack.empty() ? nullptr : stack.top();
-            }
-
-            bool IsDone(const std::stack<const Node *> &stack) const override
-            {
-                return stack.empty();
-            }
-
-        private:
-            void PushChildren(const Node *node, std::stack<const Node *> &stack)
-            {
-                if (node->right_)
-                {
-                    stack.push(node->right_.get());
-                    PushChildren(node->right_.get(), stack);
-                }
-                if (node->left_)
-                {
-                    stack.push(node->left_.get());
-                    PushChildren(node->left_.get(), stack);
-                }
-            }
-        };
-
-        // Итератор
         class AVLIterator final
         {
         private:
@@ -384,7 +341,7 @@ namespace avl_tree
             }
         }; // class AVLIterator
 
-        // Методы для создания итераторов
+        // methods to create iterators for different traversal strategies
         AVLIterator BeginPreOrder() const
         {
             return AVLIterator(root_.get(), std::make_unique<PreOrderStrategy>());
@@ -415,57 +372,19 @@ namespace avl_tree
             return AVLIterator(nullptr, std::make_unique<PostOrderStrategy>());
         }
 
-#ifdef NOT_VALID
-        void RangeQuery(const std::unique_ptr<Node> &node, const T &min, const T &max, std::function<void(const T &)> callback) const
-        {
-            if (!node)
-                throw NodeNullException();
-
-            // FIXME exceptions needed
-            const T &key = node->key_;
-            //Compare comp;
-            if (comp(min, key))
-            {
-                RangeQuery(node->left_, min, max, callback);
-            }
-            if (!comp(key, min) && !comp(max, key))
-            {
-                callback(key);
-            }
-            if (comp(key, max))
-            {
-                RangeQuery(node->right_, min, max, callback);
-            }
-        }
-
-       
-        #endif /* NOT_VALID */
 
         [[nodiscard]] size_t RangeQuery(const T& min, const T& max) const
         {
-            if (!root_)
-                throw EmptyTreeException();
-            return RangeQueryHelper(root_.get(), min, max);
-        }
-
-        [[nodiscard]] size_t RangeQueryHelper(const Node* node, const T& min, const T& max) const
-        {
-            if (!node)
+            if (!root_ || min > max)
+            {
+                // If tree is empty or min_key > max_key 
                 return 0;
-            LOG(INFO) << "Node key: " << node->key_;
-            if (node->key_ < min)
-                return RangeQueryHelper(node->right_.get(), min, max);
-
-            if (node->key_ > max)
-                return RangeQueryHelper(node->left_.get(), min, max);
-
-                
-
-            size_t left_count = node->left_ ? node->left_->desc_size : 0;
-            size_t right_count = node->right_ ? node->right_->desc_size : 0;
-            LOG(INFO) << ", Left count: " << left_count << ", Right count: " << right_count;
-            return 1 + left_count + right_count;
+            }
+            
+            return RangeQueryInternal(root_.get(), min, max);
         }
+
+       
         AVLTree(AVLTree &&) = default;
         AVLTree &operator=(AVLTree &&) = default;
 

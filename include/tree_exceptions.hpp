@@ -16,12 +16,6 @@ namespace avl_tree
         const char *message_;
     };
 
-    class EmptyTreeException : public AVLException
-    {
-    public:
-        EmptyTreeException() : AVLException("\n Operation on empty AVL tree") {}
-    };
-
     class NodeNullException : public AVLException
     {
     public:

@@ -1,50 +1,74 @@
 #include "avl_tree.hpp"
 #include "tree_exceptions.hpp"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     google::InitGoogleLogging(argv[0]);
     FLAGS_logtostderr = 1;
-
+    FLAGS_minloglevel = google::FATAL;
     avl_tree::AVLTree<int> tree;
-    tree.Insert(50);
-    tree.Insert(30);
-    tree.Insert(70);
-    tree.Insert(20);
-    tree.Insert(40);
-    tree.Insert(60);
-    tree.Insert(80);
 
-    std::cout << "Pre-order traversal: ";
-    for (auto it = tree.BeginPreOrder(); it != tree.EndPreOrder(); ++it)
+    char command;
+
+    try
     {
-        std::cout << *it << " ";
-    }
-    std::cout << std::endl;
+        while (std::cin >> command)
+        {
+            switch (command)
+            {
+            case 'k':
+            {
+                int n;
+                std::cin >> n;
+                if (!std::cin.good())
+                {
+                    throw std::invalid_argument("\n Key invalid");
+                }
 
-    std::cout << "In-order traversal: ";
-    for (auto it = tree.BeginInOrder(); it != tree.EndInOrder(); ++it)
-    {
-        std::cout << *it << " ";
-    }
-    std::cout << std::endl;
+                tree.Insert(n);
+                break;
+            }
+            case 'q':
+            {
+                int a;
+                std::cin >> a;
+                if (!std::cin.good())
+                {
+                    throw std::invalid_argument(
+                        "\n Invalid first number for the request");
+                }
 
-    // FIXME
-    /*
-        // Post-order обход
-        std::cout << "Post-order traversal: ";
-        for (auto it = tree.BeginPostOrder(); it != tree.EndPostOrder(); ++it) {
-            std::cout << *it << " ";
+                int b;
+                std::cin >> b;
+                if (!std::cin.good())
+                {
+                    throw std::invalid_argument(
+                        "\n Invalid second number for the request");
+                }
+
+                std::cout << tree.RangeQuery(a, b) << " ";
+                break;
+            }
+            default:
+                throw std::invalid_argument("\n Unknown command");
+            }
         }
         std::cout << std::endl;
-    */
-    // TODO catch exceptions
-    
-    
-    std::cout << "Keys in range [30, 60]: " << tree.RangeQuery(30, 60);;
+    }
+    catch (const avl_tree::AVLException &e)
+    {
+        std::cerr << "Tree error: " << e.what() << std::endl;
+    }
+    catch (const std::invalid_argument &e)
+    {
+        std::cerr << "Input error: " << e.what() << std::endl;
+    }
+    catch (...)
+    {
+        std::cerr << "Don't know this exception" << std::endl;
+    }
 
-    
-    std::cout << std::endl;
+
     google::ShutdownGoogleLogging();
 
     return 0;
