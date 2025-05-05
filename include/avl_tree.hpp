@@ -362,15 +362,7 @@ namespace avl_tree
             return AVLIterator(nullptr, std::make_unique<InOrderStrategy>());
         }
 
-        AVLIterator BeginPostOrder() const
-        {
-            return AVLIterator(root_.get(), std::make_unique<PostOrderStrategy>());
-        }
-
-        AVLIterator EndPostOrder() const
-        {
-            return AVLIterator(nullptr, std::make_unique<PostOrderStrategy>());
-        }
+       
 
 
         [[nodiscard]] size_t RangeQuery(const T& min, const T& max) const

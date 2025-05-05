@@ -1,0 +1,27 @@
+name: Range query 
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Install google test and google log, also install g++-11
+      run: sudo apt-get install libgtest-dev googletest google-mock g++-11 libbenchmark-dev  libgoogle-glog-dev
+    - name: CMake release config
+      run: cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-11 -DCMAKE_BUILD_TYPE=Release
+    - name: CMake release build
+      run: cmake --build build
+    - name: Run io tests
+      run: ctest --output-on-failure --test-dir build
+    - name: Run range query tests
+      run: cd build/tests/gtest && ./gtests
