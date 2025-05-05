@@ -14,21 +14,16 @@ Output will be: <code> 0 0 1 </code>
 ## How to build
 Build to use:
 ```
-cmake -B build 
+cmake cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-11 -DCMAKE_BUILD_TYPE=Release
 cmake --build build 
 ./build/range_queries
  ```
-Build to test with GoogleTest:
+Test with GoogleTest:
 ```
-cd tests/gtest
-cmake -B build 
-cmake --build build 
-./build/avl_tree_tests
+./build/tests/gtest/gtests
  ```
 
- Run script with 11 input/output tests: (**Path dependency**):
+ Run ctest with 11 input/output tests (for now):
  ```
- cd tests/io_tests/
- chmod +x launch.sh 
- ./launch.sh
+ctest --output-on-failure --test-dir build
  ```
