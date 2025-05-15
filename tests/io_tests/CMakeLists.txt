@@ -36,7 +36,7 @@ foreach(input_filename ${INPUT_FILES})
         NAME ${test_name}
        
         COMMAND bash ${SINGLE_TEST_SCRIPT}
-            $<TARGET_FILE:${PROJECT_NAME}>   
+            $<TARGET_FILE:range_queries>   
             ${current_input_file}           
             ${expected_output_file}      
         
