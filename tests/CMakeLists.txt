@@ -4,3 +4,5 @@ add_subdirectory(io_tests)
 if (BENCHMARK)
     add_subdirectory(benchmark)
 endif()
+
+add_subdirectory(fuzz)

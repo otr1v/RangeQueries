@@ -11,3 +11,5 @@ include_directories(${GTEST_INCLUDE_DIRS})
 
 add_executable(gtests tests.cpp)
 target_link_libraries(gtests PRIVATE AVLTreeLogic ${GTEST_LIBRARIES} ${GTEST_MAIN_LIBRARIES} pthread glog::glog)
+
+list(APPEND ALL_FORMAT_TARGETS gtests)

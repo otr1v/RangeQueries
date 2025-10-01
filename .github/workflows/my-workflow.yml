@@ -1,4 +1,5 @@
-name: Range query 
+name: Build, Test and Lint
+
 on:
   push:
     branches:
@@ -6,22 +7,64 @@ on:
   pull_request:
     branches:
       - main
+
 jobs:
-  main:
+  build-and-test:
+    strategy:
+      matrix:
+        preset: [default, release] # Corresponds to names in CMakePresets.json
+
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-    - name: Install google test and google log, also install g++-11
-      run: sudo apt-get install libgtest-dev googletest google-mock g++-11 libbenchmark-dev  libgoogle-glog-dev
-    - name: CMake release config
-      run: cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-11 -DCMAKE_BUILD_TYPE=Release
-    - name: CMake release build
-      run: cmake --build build
-    - name: Run io tests
-      run: ctest --output-on-failure --test-dir build
-    - name: Run range query tests
-      run: cd build/tests/gtest && ./gtests
+
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y libgtest-dev libgoogle-glog-dev
+
+    - name: Configure CMake
+      run: cmake --preset ${{ matrix.preset }}
+
+    - name: Build project
+      run: cmake --build --preset ${{ matrix.preset }}
+
+    - name: Run tests
+      # Presets define binary directories, so we use them to locate test executables
+      run: |
+        if [ "${{ matrix.preset }}" = "default" ]; then
+          ./build/debug/tests/gtest/gtests
+        elif [ "${{ matrix.preset }}" = "release" ]; then
+          ./build/release/tests/gtest/gtests
+        fi
+
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install dependencies (Clang)
+      run: sudo apt-get update && sudo apt-get install -y clang libgoogle-glog-dev
+
+    - name: Configure CMake for Fuzzing
+      run: cmake --preset fuzz
+
+    - name: Build Fuzzer
+      run: cmake --build --preset fuzz
+
+    - name: Run Fuzzing for 60 seconds
+      run: ./build/fuzz/tests/fuzz/avl_tree_fuzzer -max_total_time=60 -print_final_stats=1
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install clang-format
+      run: sudo apt-get update && sudo apt-get install -y clang-format
+
+    - name: Run clang-format
+      run: |
+        find . -regex '.*\.\(cpp\|hpp\)' -exec clang-format -i {} +
+        git diff --exit-code -- . ':(exclude).clang-format'
