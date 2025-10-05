@@ -2,3 +2,4 @@ build
 tests/benchmark
 log.txt
 .vscode
+tests/io_tests/Testing

@@ -11,25 +11,21 @@ namespace avl_tree
   TEST(AVLTreeRangeQueryIntTest, EmptyTree)
   {
     AVLTree<int> tree;
-    // В пустом дереве любой диапазон должен давать 0
     EXPECT_EQ(tree.RangeQuery(0, 100), 0);
     EXPECT_EQ(tree.RangeQuery(-100, 100), 0);
     EXPECT_EQ(tree.RangeQuery(std::numeric_limits<int>::min(), std::numeric_limits<int>::max()), 0);
   }
 
-  // --- Тесты для AVLTree<int> ---
 
   TEST(AVLTreeRangeQueryIntTest, SingleElementTree)
   {
     AVLTree<int> tree;
     tree.Insert(10);
 
-    // Диапазоны, не включающие элемент
     EXPECT_EQ(tree.RangeQuery(0, 5), 0);
     EXPECT_EQ(tree.RangeQuery(15, 20), 0);
     EXPECT_EQ(tree.RangeQuery(11, 11), 0);
 
-    // Диапазоны, включающие элемент
     EXPECT_EQ(tree.RangeQuery(0, 10), 1);
     EXPECT_EQ(tree.RangeQuery(10, 20), 1);
     EXPECT_EQ(tree.RangeQuery(5, 15), 1);
@@ -77,7 +73,7 @@ namespace avl_tree
     //     30   70
     //    / \   / \
     //   20 40 60  80
-    const size_t total_elements = values.size(); // 7
+    const size_t total_elements = values.size();
 
     EXPECT_EQ(tree.RangeQuery(0, 100), total_elements);
     EXPECT_EQ(tree.RangeQuery(20, 80), total_elements);
@@ -99,7 +95,6 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery(70, 60), 0);
   }
 
-  // --- Тесты для другого типа данных ---
 
   TEST(AVLTreeRangeQueryStringTest, StringData)
   {
@@ -141,7 +136,6 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery(n, 1), 0) << "Некорректный диапазон max < min";
   }
 
-  // Тест с большим количеством элементов, вставленных в обратном порядке
   TEST(AVLTreeRangeQueryComplexTest, LargeSortedDescending)
   {
     AVLTree<int> tree;
@@ -161,12 +155,10 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery(0, 0), 0);
   }
 
-  // Тест, проверяющий корректность подсчета после специфических поворотов
   TEST(AVLTreeRangeQueryComplexTest, AfterSpecificRotations)
   {
     AVLTree<int> tree;
 
-    // Последовательность, вызывающая разные повороты
     const std::vector<int> values = {10, 20, 30, 40, 50, 25, 15, 5, 28, 45};
 
     std::set<int> reference_set;
@@ -176,7 +168,6 @@ namespace avl_tree
       reference_set.insert(v);
     }
 
-    // Проверяем диапазоны после всех вставок и балансировок
     EXPECT_EQ(tree.RangeQuery(5, 50), reference_set.size());
     EXPECT_EQ(tree.RangeQuery(10, 30), 6);
     EXPECT_EQ(tree.RangeQuery(25, 45), 5);
@@ -186,7 +177,6 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery(28, 28), 1);
   }
 
-  // Тест с граничными значениями типа int
   TEST(AVLTreeRangeQueryComplexTest, IntegerLimits)
   {
     AVLTree<int> tree;
@@ -198,7 +188,6 @@ namespace avl_tree
     tree.Insert(max_int);
     tree.Insert(1);
     tree.Insert(-1);
-    // Добавим значения близкие к границам, но не сами границы
 
     if (min_int < -1)
       tree.Insert(min_int + 1);
@@ -220,7 +209,6 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery(1, max_int - 1), (max_int > 1 ? 2u : 1u));
   }
 
-  // Тест для чисел с плавающей точкой, проверяющий точность сравнений
   TEST(AVLTreeRangeQueryComplexTest, FloatingPointPrecision)
   {
     AVLTree<double> tree;
@@ -233,7 +221,6 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery(1.0, 3.0), 5);
     EXPECT_EQ(tree.RangeQuery(1.0, 1.0), 1);
     EXPECT_EQ(tree.RangeQuery(3.0, 3.0), 1);
-    // Проверяем очень узкие диапазоны
     EXPECT_EQ(tree.RangeQuery(1.0000000000000005, 1.0000000000000015), 1);
     EXPECT_EQ(tree.RangeQuery(2.9999999999999985, 2.9999999999999995), 1);
     EXPECT_EQ(tree.RangeQuery(1.0, 2.0), 3);
@@ -246,7 +233,7 @@ int main(int argc, char **argv)
 {
   google::InitGoogleLogging(argv[0]);
   FLAGS_logtostderr = 1;
-  FLAGS_minloglevel = google::FATAL; // Уровень логирования, можно изменить на INFO для отладки
+  FLAGS_minloglevel = google::FATAL; 
   ::testing::InitGoogleTest(&argc, argv);
   google::ShutdownGoogleLogging();
   return RUN_ALL_TESTS();

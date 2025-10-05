@@ -8,8 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(FUZZ "Build fuzzer targets" OFF)
 
-#Enable sanitizers for debug builds, but not for the fuzzer itself,
-#as fuzzer - specific flags will be added in tests / CMakeLists.txt
+
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address,undefined")
 set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address,undefined")
 

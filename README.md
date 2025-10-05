@@ -52,7 +52,7 @@ cmake --build build/debug/
 ```bash
 cmake --preset fuzz
 cmake --build --preset fuzz
-./build/fuzz/tests/fuzz/avl_tree_fuzzer
+./build/fuzz/tests/fuzz/avl_tree_fuzzer {-runs=100000}
 ```
 
 
@@ -62,16 +62,13 @@ cmake --build --preset fuzz
 ```bash
 ./build/tests/gtest/gtests
  ```
-```
+
 TARGET_NAME={debug, fuzz}
  Run ctest with 11 input/output tests (for now):
  ```
 ctest --output-on-failure --test-dir build/${TARGET_NAME}
  ```
-**Input/output tests (ctest):**
-```bash
-ctest --test-dir build --output-on-failure
-```
+
 
 ### 3. Code Formatting
 
