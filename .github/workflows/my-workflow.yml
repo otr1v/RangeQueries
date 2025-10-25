@@ -63,5 +63,8 @@ jobs:
     - name: Install clang-format
       run: sudo apt-get update && sudo apt-get install -y clang-format libgoogle-glog-dev libgtest-dev
 
-    - name: Run clang-format
-      run: cmake --build . --target format
+    - name: Run cmake configuration
+      run: cmake --preset release
+
+    - name: Run clang format
+      run: cmake --build build/release --target format
