@@ -61,9 +61,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Install clang-format
-      run: sudo apt-get update && sudo apt-get install -y clang-format
+      run: sudo apt-get update && sudo apt-get install -y clang-format libgoogle-glog-dev libgtest-dev
 
     - name: Run clang-format
-      run: |
-        find . -regex '.*\.\(cpp\|hpp\)' -exec clang-format -i {} +
-        git diff --exit-code -- . ':(exclude).clang-format'
+      run: cmake --build . --target format

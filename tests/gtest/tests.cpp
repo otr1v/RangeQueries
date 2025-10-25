@@ -1,24 +1,22 @@
-#include "gtest/gtest.h"
-#include "avl_tree.hpp"
-
-#include <vector>
-#include <string>
 #include <limits>
+#include <string>
+#include <vector>
 
-namespace avl_tree
-{
+#include "avl_tree.hpp"
+#include "gtest/gtest.h"
 
-  TEST(AVLTreeRangeQueryIntTest, EmptyTree)
-  {
+namespace avl_tree {
+
+TEST(AVLTreeRangeQueryIntTest, EmptyTree) {
     AVLTree<int> tree;
     EXPECT_EQ(tree.RangeQuery(0, 100), 0);
     EXPECT_EQ(tree.RangeQuery(-100, 100), 0);
-    EXPECT_EQ(tree.RangeQuery(std::numeric_limits<int>::min(), std::numeric_limits<int>::max()), 0);
-  }
+    EXPECT_EQ(tree.RangeQuery(std::numeric_limits<int>::min(),
+                              std::numeric_limits<int>::max()),
+              0);
+}
 
-
-  TEST(AVLTreeRangeQueryIntTest, SingleElementTree)
-  {
+TEST(AVLTreeRangeQueryIntTest, SingleElementTree) {
     AVLTree<int> tree;
     tree.Insert(10);
 
@@ -30,10 +28,9 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery(10, 20), 1);
     EXPECT_EQ(tree.RangeQuery(5, 15), 1);
     EXPECT_EQ(tree.RangeQuery(10, 10), 1);
-  }
+}
 
-  TEST(AVLTreeRangeQueryIntTest, SimpleTreeThreeNodes)
-  {
+TEST(AVLTreeRangeQueryIntTest, SimpleTreeThreeNodes) {
     AVLTree<int> tree;
     tree.Insert(10);
     tree.Insert(5);
@@ -57,15 +54,13 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery(15, 15), 1);
     EXPECT_EQ(tree.RangeQuery(11, 11), 0);
     EXPECT_EQ(tree.RangeQuery(15, 5), 0);
-  }
+}
 
-  TEST(AVLTreeRangeQueryIntTest, LargerTreeExample)
-  {
+TEST(AVLTreeRangeQueryIntTest, LargerTreeExample) {
     AVLTree<int> tree;
     const std::vector<int> values = {50, 30, 70, 20, 40, 60, 80};
-    for (int val : values)
-    {
-      tree.Insert(val);
+    for (int val : values) {
+        tree.Insert(val);
     }
     // Дерево (сбалансированное):
     //       50
@@ -93,11 +88,9 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery(79, 81), 1);
     EXPECT_EQ(tree.RangeQuery(35, 65), 3);
     EXPECT_EQ(tree.RangeQuery(70, 60), 0);
-  }
+}
 
-
-  TEST(AVLTreeRangeQueryStringTest, StringData)
-  {
+TEST(AVLTreeRangeQueryStringTest, StringData) {
     AVLTree<std::string> tree;
     tree.Insert("banana");
     tree.Insert("apple");
@@ -113,36 +106,36 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery("fig", "apple"), 0);
     EXPECT_EQ(tree.RangeQuery("cherry", "cherry"), 1);
     EXPECT_EQ(tree.RangeQuery("a", "z"), 5);
-  }
+}
 
-  TEST(AVLTreeRangeQueryComplexTest, LargeSortedAscending)
-  {
+TEST(AVLTreeRangeQueryComplexTest, LargeSortedAscending) {
     AVLTree<int> tree;
     const int n = 2000;
-    for (int i = 1; i <= n; ++i)
-    {
-      tree.Insert(i);
+    for (int i = 1; i <= n; ++i) {
+        tree.Insert(i);
     }
 
     EXPECT_EQ(tree.RangeQuery(1, n), n) << "Диапазон, включающий все элементы";
     EXPECT_EQ(tree.RangeQuery(1, n / 2), n / 2) << "Первая половина элементов";
-    EXPECT_EQ(tree.RangeQuery(n / 2 + 1, n), n - (n / 2)) << "Вторая половина элементов";
-    EXPECT_EQ(tree.RangeQuery(n / 4, 3 * n / 4), (3 * n / 4) - (n / 4) + 1) << "Средний диапазон";
+    EXPECT_EQ(tree.RangeQuery(n / 2 + 1, n), n - (n / 2))
+        << "Вторая половина элементов";
+    EXPECT_EQ(tree.RangeQuery(n / 4, 3 * n / 4), (3 * n / 4) - (n / 4) + 1)
+        << "Средний диапазон";
     EXPECT_EQ(tree.RangeQuery(1, 1), 1) << "Только первый элемент";
     EXPECT_EQ(tree.RangeQuery(n, n), 1) << "Только последний элемент";
-    EXPECT_EQ(tree.RangeQuery(n + 1, n + 10), 0) << "Диапазон выше всех элементов";
+    EXPECT_EQ(tree.RangeQuery(n + 1, n + 10), 0)
+        << "Диапазон выше всех элементов";
     EXPECT_EQ(tree.RangeQuery(0, 0), 0) << "Диапазон ниже всех элементов";
-    EXPECT_EQ(tree.RangeQuery(n / 3, n / 2), (n / 2) - (n / 3) + 1) << "Вложенный диапазон";
+    EXPECT_EQ(tree.RangeQuery(n / 3, n / 2), (n / 2) - (n / 3) + 1)
+        << "Вложенный диапазон";
     EXPECT_EQ(tree.RangeQuery(n, 1), 0) << "Некорректный диапазон max < min";
-  }
+}
 
-  TEST(AVLTreeRangeQueryComplexTest, LargeSortedDescending)
-  {
+TEST(AVLTreeRangeQueryComplexTest, LargeSortedDescending) {
     AVLTree<int> tree;
     const int n = 2000;
-    for (int i = n; i >= 1; --i)
-    {
-      tree.Insert(i);
+    for (int i = n; i >= 1; --i) {
+        tree.Insert(i);
     }
 
     EXPECT_EQ(tree.RangeQuery(1, n), n);
@@ -153,19 +146,17 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery(n, n), 1);
     EXPECT_EQ(tree.RangeQuery(n + 1, n + 10), 0);
     EXPECT_EQ(tree.RangeQuery(0, 0), 0);
-  }
+}
 
-  TEST(AVLTreeRangeQueryComplexTest, AfterSpecificRotations)
-  {
+TEST(AVLTreeRangeQueryComplexTest, AfterSpecificRotations) {
     AVLTree<int> tree;
 
     const std::vector<int> values = {10, 20, 30, 40, 50, 25, 15, 5, 28, 45};
 
     std::set<int> reference_set;
-    for (int v : values)
-    {
-      tree.Insert(v);
-      reference_set.insert(v);
+    for (int v : values) {
+        tree.Insert(v);
+        reference_set.insert(v);
     }
 
     EXPECT_EQ(tree.RangeQuery(5, 50), reference_set.size());
@@ -175,10 +166,9 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery(40, 50), 3);
     EXPECT_EQ(tree.RangeQuery(26, 27), 0);
     EXPECT_EQ(tree.RangeQuery(28, 28), 1);
-  }
+}
 
-  TEST(AVLTreeRangeQueryComplexTest, IntegerLimits)
-  {
+TEST(AVLTreeRangeQueryComplexTest, IntegerLimits) {
     AVLTree<int> tree;
     const int min_int = std::numeric_limits<int>::min();
     const int max_int = std::numeric_limits<int>::max();
@@ -189,16 +179,12 @@ namespace avl_tree
     tree.Insert(1);
     tree.Insert(-1);
 
-    if (min_int < -1)
-      tree.Insert(min_int + 1);
-    if (max_int > 1)
-      tree.Insert(max_int - 1);
+    if (min_int < -1) tree.Insert(min_int + 1);
+    if (max_int > 1) tree.Insert(max_int - 1);
 
     size_t expected_total = 5;
-    if (min_int < -1)
-      expected_total++;
-    if (max_int > 1)
-      expected_total++;
+    if (min_int < -1) expected_total++;
+    if (max_int > 1) expected_total++;
 
     EXPECT_EQ(tree.RangeQuery(min_int, max_int), expected_total);
     EXPECT_EQ(tree.RangeQuery(min_int, min_int), 1);
@@ -207,10 +193,9 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery(0, max_int), (max_int > 1 ? 4u : 3u));
     EXPECT_EQ(tree.RangeQuery(min_int + 1, -1), (min_int < -1 ? 2u : 1u));
     EXPECT_EQ(tree.RangeQuery(1, max_int - 1), (max_int > 1 ? 2u : 1u));
-  }
+}
 
-  TEST(AVLTreeRangeQueryComplexTest, FloatingPointPrecision)
-  {
+TEST(AVLTreeRangeQueryComplexTest, FloatingPointPrecision) {
     AVLTree<double> tree;
     tree.Insert(1.0);
     tree.Insert(2.0);
@@ -225,16 +210,15 @@ namespace avl_tree
     EXPECT_EQ(tree.RangeQuery(2.9999999999999985, 2.9999999999999995), 1);
     EXPECT_EQ(tree.RangeQuery(1.0, 2.0), 3);
     EXPECT_EQ(tree.RangeQuery(1.1, 2.9), 1);
-  }
+}
 
-} // namespace avl_tree
+}  // namespace avl_tree
 
-int main(int argc, char **argv)
-{
-  google::InitGoogleLogging(argv[0]);
-  FLAGS_logtostderr = 1;
-  FLAGS_minloglevel = google::FATAL; 
-  ::testing::InitGoogleTest(&argc, argv);
-  google::ShutdownGoogleLogging();
-  return RUN_ALL_TESTS();
+int main(int argc, char **argv) {
+    google::InitGoogleLogging(argv[0]);
+    FLAGS_logtostderr = 1;
+    FLAGS_minloglevel = google::FATAL;
+    ::testing::InitGoogleTest(&argc, argv);
+    google::ShutdownGoogleLogging();
+    return RUN_ALL_TESTS();
 }

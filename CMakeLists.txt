@@ -40,17 +40,25 @@ endif()
 
 find_program(CLANG_FORMAT_EXE clang-format)
 if(CLANG_FORMAT_EXE)
-    # Собираем список файлов для форматирования с помощью генераторных выражений.
-    # Этот подход надежно получает абсолютные пути ко всем файлам.
-    set(FILES_TO_FORMAT
-        $<TARGET_PROPERTY:AVLTreeLogic,INTERFACE_SOURCES> # Заголовочные файлы
-        $<TARGET_FILE:range_queries> # Исходники основного приложения
-        $<$<BOOL:${BUILD_TESTING}>:$<TARGET_FILE:gtests>> # Исходники gtest (если включены)
-        $<$<BOOL:${FUZZ}>:$<TARGET_FILE:avl_tree_fuzzer>> # Исходники фаззера (если включен)
+    set(ALL_CXX_SOURCES
+        main.cpp
+        include/avl_tree.hpp
+        include/tree_exceptions.hpp
     )
+    if(BUILD_TESTING)
+        list(APPEND ALL_CXX_SOURCES
+            tests/gtest/tests.cpp
+        )
+    endif()
+    if(FUZZ)
+        list(APPEND ALL_CXX_SOURCES
+            tests/fuzz/fuzz_target.cpp
+        )
+    endif()
+
     add_custom_target(format
-        COMMAND ${CLANG_FORMAT_EXE} -i ${FILES_TO_FORMAT}
-        COMMAND_EXPAND_LISTS
+        COMMAND ${CLANG_FORMAT_EXE} -i ${ALL_CXX_SOURCES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Formatting all C++ files with clang-format..."
     )
 endif()
